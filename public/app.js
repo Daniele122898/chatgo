@@ -28,7 +28,7 @@ new Vue({
 
     methods: {
         send: function () {
-            if (this.newMsg != ''){
+            if (this.newMsg !== ""){
                 this.ws.send(
                     JSON.stringify({
                         author: {
@@ -41,6 +41,14 @@ new Vue({
                 this.newMsg = ''; //REset newMsg
             }
         },
+        
+        changeAv: function () {
+          var url = prompt("Please give AvatarURL", "");
+            if (url == null || url === "") {
+            } else {
+                this.avatarUrl = url;
+            }
+        },
 
         join: function () {
             if (!this.username) {
@@ -48,11 +56,12 @@ new Vue({
                 return
             }
             this.username= $('<p>').html(this.username).text();
+            this.avatarUrl = "http://i.imgur.com/tcpgezi.jpg";
             this.joined = true;
         },
 
         getAvatarUrl: function (url) {
-            if (url == null || url == ''){
+            if (url == null || url === ""){
                return "http://i.imgur.com/tcpgezi.jpg"
             }
             return url;

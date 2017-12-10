@@ -14,6 +14,48 @@ main {
     flex: 1 0 auto;
 }
 
+#profileCard{
+    margin-right: 10vh;
+}
+
+.positioner{
+    width: 60%;
+    height: 55%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+#editIcon{
+    font-size: 1rem;
+    line-height: 30px;
+    display: block;
+}
+
+#avatarEdit{
+    width: 30px;
+    height: 30px;
+}
+
+.icon{
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+}
+
+#cardAvatar{
+    max-width: 100px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto;
+}
+
+#cardUsername{
+    vertical-align: bottom;
+    text-align: center;
+    display: block;
+}
+
 #foot{
     background-color: #515151;
 }
