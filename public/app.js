@@ -7,19 +7,21 @@ new Vue({
         chatContent: "", //A running lost of chat messages displayed on the screen
         username: null, //our usernmae
         avatarUrl: null, //AvatarURL
-        joined: false //true if email and username are filled in
-   },
+        joined: false, //true if email and username are filled in
+        logs: ""
+    },
 
     created: function () {
         var self = this;
         this.ws = new WebSocket("ws://"+window.location.host+"/ws");
         this.ws.addEventListener("message", function (e) {
+            self.logs += 'JSON RECEIVED: '+e.data+'<br/>';
            var msg = JSON.parse(e.data);
            self.chatContent += '<div class="chip">' +
                 '<img src="'+self.getAvatarUrl(msg.author.avatarurl)+'">' +//Avatar
                 msg.author.username +
                '</div>' +
-               emojione.toImage(msg.message) + '<br/>'; //parse emojis
+               emojione.toImage(msg.message)+'<br/>'; //parse emojis
 
             var element = document.getElementById('chat-messages');
             element.scrollTop = element.scrollHeight; //Auto scroll to the bottom
@@ -29,15 +31,12 @@ new Vue({
     methods: {
         send: function () {
             if (this.newMsg !== ""){
-                this.ws.send(
-                    JSON.stringify({
-                        author: {
-                            username: this.username,
-                            avatarurl: this.avatarurl
-                        },
-                        message: $('<p>').html(this.newMsg).text() //strip out html
-                    })
-                );
+                //var self = this;
+                //var author = {"username":this.username, "avatarurl": this.avatarUrl};
+                //var msg = {"author":author, "message":$('<p>').html(this.newMsg).text()};
+                var msgToSend = JSON.stringify({"author":{"username":this.username, "avatarurl": this.avatarUrl}, "message":$('<p>').html(this.newMsg).text()});
+                this.logs += 'JSON SENT: '+msgToSend+'<br/>';
+                this.ws.send(msgToSend);
                 this.newMsg = ''; //REset newMsg
             }
         },

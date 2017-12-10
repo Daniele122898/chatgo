@@ -60,6 +60,13 @@ main {
     background-color: #515151;
 }
 
+#logs{
+    min-height: 10vh;
+    height: 60vh;
+    width: 100%;
+    overflow-y: scroll;
+}
+
 #chat-messages {
     min-height: 10vh;
     height: 60vh;
