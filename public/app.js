@@ -24,7 +24,7 @@ new Vue({
                emojione.toImage(msg.message)+'<br/>'; //parse emojis
 
             var element = document.getElementById('chat-messages');
-            element.scrollTop = element.scrollHeight; //Auto scroll to the bottom
+            element.scrollTop =element.scrollHeight; //Auto scroll to the bottom
         });
     },
 
