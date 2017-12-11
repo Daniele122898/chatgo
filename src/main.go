@@ -5,10 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"fmt"
 )
 
 var (
-	clients = make(map[*websocket.Conn]bool) 	// connected clients
+	clients = make(map[*websocket.Conn]string) 	// connected clients
 	broadcast = make(chan Message)				// broadcast channel
 	upgrader = websocket.Upgrader{}
 )
@@ -33,7 +34,7 @@ func main() {
 	go handleMessages()
 	// Start the server on localhost port 8000 and log any errors
 	log.Println("http server started on :8000")
-	err := http.ListenAndServe(":8000", nil)
+	err := http.ListenAndServe(":80", nil) //TODO CHANGE BACK TO 8000
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
@@ -47,13 +48,26 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 	}
 	// Make sure we close the connecton when the function returns
 	defer ws.Close()
+	//Get Username of user
+	var author Author
+	err = ws.ReadJSON(&author)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+	fmt.Println("User Registered: ",author.Username)
 	// Register our new client
-	clients[ws] = true
+	clients[ws] = author.Username
+
+	//Send welcome message
+	welcomeMSG := Message{Author:Author{Username:"SYSTEM", AvatarUrl:""}, Message: author.Username+" joined the chat!"}
+	broadcast <- welcomeMSG
+
 	// Infinite loop to wait and read messages from websocket
 	for{
 		var msg Message
 		// Read in a new message as JSON and map it to the message object
-		err := ws.ReadJSON(&msg)
+		err = ws.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
 			delete(clients, ws)

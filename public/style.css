@@ -42,6 +42,9 @@ main {
     right: -20px;
     bottom: -20px;
 }
+.systemMsg{
+    color: lightgray;
+}
 
 #cardAvatar{
     max-width: 100px;
