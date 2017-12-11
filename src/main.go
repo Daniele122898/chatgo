@@ -12,6 +12,7 @@ var (
 	clients = make(map[*websocket.Conn]string) 	// connected clients
 	broadcast = make(chan Message)				// broadcast channel
 	upgrader = websocket.Upgrader{}
+	systemAuthor = Author{Username:"SYSTEM", AvatarUrl:""}
 )
 
 type Author struct {
@@ -34,7 +35,7 @@ func main() {
 	go handleMessages()
 	// Start the server on localhost port 8000 and log any errors
 	log.Println("http server started on :8000")
-	err := http.ListenAndServe(":80", nil) //TODO CHANGE BACK TO 8000
+	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
@@ -60,7 +61,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 	clients[ws] = author.Username
 
 	//Send welcome message
-	welcomeMSG := Message{Author:Author{Username:"SYSTEM", AvatarUrl:""}, Message: author.Username+" joined the chat!"}
+	welcomeMSG := Message{Author:systemAuthor, Message: author.Username+" joined the chat!"}
 	broadcast <- welcomeMSG
 
 	// Infinite loop to wait and read messages from websocket
@@ -71,6 +72,8 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 		if err != nil {
 			log.Printf("error: %v", err)
 			delete(clients, ws)
+			//broadcast that user left
+			broadcast <- Message{Author:systemAuthor, Message: author.Username+ " left the chat!"}
 			break
 		}
 		// Send the newly received message to the broadcast channel
@@ -87,8 +90,11 @@ func handleMessages(){
 			err:= client.WriteJSON(msg)
 			if err != nil {
 				log.Printf("error: %v", err)
+				username:= clients[client]
 				client.Close()
 				delete(clients, client)
+				//broadcast that user left
+				broadcast <- Message{Author:systemAuthor, Message: username+" left the chat!"}
 			}
 		}
 	}
