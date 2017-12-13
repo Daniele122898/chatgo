@@ -7,12 +7,15 @@ import (
 	"github.com/gorilla/websocket"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rs/xid"
 )
 
 const(
 	MESSAGE_REC = iota 	//0
-	JOINED_ROOM 		//1
-	CREATED_ROOM		//2
+	ROOM_LIST			//1
+	JOINED_ROOM 		//2
+	CREATED_ROOM		//3
+	LEFT_ROOM			//4
 )
 
 var (
@@ -44,6 +47,17 @@ type Message struct {
 	RoomId string `json:"roomid"`
 }
 
+type SendData struct{
+	OpCode int `json:"opcode"`
+	Data interface{} `json:"data"`
+}
+
+type RecvData struct{
+	OpCode int `json:"opcode"`
+	Data map[string]interface{} `json:"data"`
+}
+
+
 func main() {
 	// Create a simple file server
 	fs := http.FileServer(http.Dir("../public"))
@@ -52,6 +66,9 @@ func main() {
 	http.HandleFunc("/ws", handleConnections) //run as go routine
 	// Start listening for incoming chat messages
 	go handleMessages()
+	//Create initial Room
+	rooms[xid.New().String()] = &Room{clients:make(map[*websocket.Conn]string), Name:"General"}
+	rooms[xid.New().String()] = &Room{clients:make(map[*websocket.Conn]string), Name:"TEST"}
 	// Start the server on localhost port 8000 and log any errors
 	log.Println("http server started on :8000")
 	err := http.ListenAndServe(":8000", nil)
@@ -77,66 +94,69 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 	}
 	fmt.Println("User Registered: ",client.Username)
 	//Send list of rooms
-	err = ws.WriteJSON(rooms)
+	err = ws.WriteJSON(SendData{OpCode:ROOM_LIST, Data: rooms})
 	if err != nil {
 		log.Printf("error: %v", err)
 		return
 	}
-
-	//wait for user to join or create a Room
-	var data map[string]interface{}
-	err = ws.ReadJSON(&data)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return
-	}
-	opC := data["opcode"].(int)
-	//try converting to room action
-	delete(data, "opcode")
 	var ra RoomAction
-	err = mapstructure.Decode(data, &ra)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return
-	}
-	//Check what the user did
 	var room *Room
-	switch opC {
-	case JOINED_ROOM:
-		//Join room
-		var ok bool
-		room, ok = rooms[ra.Id]
-		if !ok {
-			log.Println("COULDN'T FIND ROOM IN LIST")
-			return
-		}
-		// Register our new client
-		room.clients[ws] =client.Username
-	case CREATED_ROOM:
-		//Create room
-	default:
-		log.Println("User tried something before joining room. Close connection")
-		return
-	}
-
-	//Send welcome message
-	welcomeMSG := Message{Author:systemAuthor, Message: client.Username+" joined the chat!", RoomId:ra.Id}
-	broadcast <- welcomeMSG
-
 	// Infinite loop to wait and read messages from websocket
 	for{
-		var msg Message
+		var dataRec RecvData
 		// Read in a new message as JSON and map it to the message object
-		err = ws.ReadJSON(&msg)
+		err = ws.ReadJSON(&dataRec)
 		if err != nil {
-			log.Printf("error: %v", err)
+			log.Printf("error reading json: %v", err)
+			if _, ok:= room.clients[ws]; ok {
+				delete(room.clients, ws)
+				//broadcast that user left
+				broadcast <- Message{Author: systemAuthor, Message: client.Username + " left the chat!", RoomId: ra.Id}
+			}
+			break
+		}
+		opC := int(dataRec.OpCode)
+		switch opC {
+		case MESSAGE_REC:
+			var msgRec Message
+			err = mapstructure.Decode(dataRec.Data, &msgRec)
+			if err != nil {
+				log.Printf("error parsing message: %v", err)
+				continue
+			}
+			// Send the newly received message to the broadcast channel
+			broadcast <- msgRec
+		case LEFT_ROOM:
 			delete(room.clients, ws)
+			log.Println("User left ", client.Username)
 			//broadcast that user left
 			broadcast <- Message{Author:systemAuthor, Message: client.Username+ " left the chat!", RoomId:ra.Id}
 			break
+		case JOINED_ROOM:
+			//Join room
+			//try converting to room action
+			err = mapstructure.Decode(dataRec.Data, &ra)
+			if err != nil {
+				log.Printf("error decode roomaction: %v", err)
+				return
+			}
+			var ok bool
+			room, ok = rooms[ra.Id]
+			if !ok {
+				log.Println("COULDN'T FIND ROOM IN LIST")
+				return
+			}
+			// Register our new client
+			room.clients[ws] =client.Username
+			//Send welcome message
+			welcomeMSG := Message{Author:systemAuthor, Message: client.Username+" joined the chat!", RoomId:ra.Id}
+			broadcast <- welcomeMSG
+		case CREATED_ROOM:
+			//Create room
+		default:
+			log.Fatal("OPCODE DOESNT MATCH")
+			continue
 		}
-		// Send the newly received message to the broadcast channel
-		broadcast <- msg
 	}
 }
 
@@ -146,9 +166,9 @@ func handleMessages(){
 		msg := <-broadcast
 		// Send it out to every client that is currently connected
 		for client:= range rooms[msg.RoomId].clients {
-			err:= client.WriteJSON(msg)
+			err:= client.WriteJSON(SendData{OpCode:MESSAGE_REC, Data:msg})
 			if err != nil {
-				log.Printf("error: %v", err)
+				log.Printf("error writing message: %v", err)
 				username:= rooms[msg.RoomId].clients[client]
 				client.Close()
 				delete(rooms[msg.RoomId].clients, client)
