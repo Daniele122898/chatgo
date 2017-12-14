@@ -28,6 +28,7 @@ var vue = new Vue({
         logs: "",
         rooms: [],
         selectedRoom: null,
+        cRoomName: null
     },
 
     created: function () {
@@ -52,6 +53,7 @@ var vue = new Vue({
 
     methods: {
         roomList: function (msg) {
+            this.rooms = [];
             for (var key in msg["data"]){
                 this.rooms.push({"id":key,"name":msg["data"][key].Name})
             }
@@ -121,6 +123,18 @@ var vue = new Vue({
                return "http://i.imgur.com/tcpgezi.jpg"
             }
             return url;
+        },
+
+        createRoom: function () {
+            if (!this.cRoomName) {
+                Materialize.toast('You must choose a Room name!', 2000);
+                return;
+            }
+            var msgToSend = JSON.stringify({"opcode":OpEnum.CREATED_ROOM, "data" : {"id":"", "name": this.cRoomName}});
+            this.logs += 'JSON ROOM CREATION SENT: '+msgToSend+'<br/>';
+            this.ws.send(msgToSend);
+            this.cRoomName = null;
+            setUpRoomJoiners();
         }
     }
 });
@@ -135,7 +149,7 @@ function setUpRoomJoiners() {
                 btnSetup(this.value);
             });
         }
-    })
+    });
 }
 
 function sleep (time) {

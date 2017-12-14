@@ -153,6 +153,20 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 			broadcast <- welcomeMSG
 		case CREATED_ROOM:
 			//Create room
+			//try converting to room action
+			err = mapstructure.Decode(dataRec.Data, &ra)
+			if err != nil {
+				log.Printf("error decode roomaction: %v", err)
+				return
+			}
+			ra.Id = xid.New().String()
+			rooms[ra.Id] = &Room{clients:make(map[*websocket.Conn]string), Name: ra.Name}
+			//Send list of rooms
+			err = ws.WriteJSON(SendData{OpCode:ROOM_LIST, Data: rooms})
+			if err != nil {
+				log.Printf("error: %v", err)
+				return
+			}
 		default:
 			log.Fatal("OPCODE DOESNT MATCH")
 			continue
