@@ -18,58 +18,85 @@
         </nav>
     </header>
     <main id="app">
-        <div class="row" v-if="joinedRoom">
-            <div class="col s12">
-                <h5>{{selectedRoom.name}}</h5>
-                <div class="card horizontal">
-                    <div id="chat-messages" class="card-content" v-html="chatContent">
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="king">
         <div class="row" v-if="joined">
-            <div v-if="joinedRoom">
+            <!--<div v-if="joinedRoom">
                 <div class="input-field col s5">
                     <input type="text" v-model="newMsg" @keyup.enter="send">
                 </div>
-                <div class ="input-field col s2">
+                <div class ="input-field col s2 closeBtn">
                     <button class="waves-effect waves-light btn" @click="send">
                         <i class="material-icons right">chat</i>
                         Send
                     </button>
+                </div>
+                <div class ="input-field col s2">
                     <button class="waves-effect waves-light btn" @click="leaveRoom">
                         <i class="material-icons right">clear</i>
                         Leave
                     </button>
                 </div>
-            </div>
-            <div class="row" v-if="!joinedRoom">
-                <div class="col s12">
-                    <div v-for="room in rooms">
-                        <div class="card horizontal">
-                            <div class="card-content">
-                                Name: {{room.name}} <br>
-                                Id: {{room.id}}
-                                <button class="waves-effect waves-light btn joinBtn">
-                                    <i class="material-icons right">input</i>
-                                    Join
-                                </button>
+            </div>-->
+            <div class="row" id="mainRow">
+                <div class="col s2 left">
+                    <div class="roomHolder">
+                        <div v-for="room in rooms" class="row innerCard">
+                            <div class="card">
+                                <div class="card-content roomlist joinBtn">
+                                    <span class="card-title">#{{room.name}}</span>
+                                    <!--<button class="waves-effect waves-light right btn joinBtn">
+                                        <i class="material-icons right">input</i>
+                                        Join
+                                    </button>-->
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div class="col s10 right" v-if="joinedRoom">
+                    <div class="card horizontal">
+                        <div id="chat-messages" class="card-content" v-html="chatContent">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div v-if="joinedRoom">
+                    <div class="input-field col s5 offset-s2">
+                        <input type="text" v-model="newMsg" @keyup.enter="send">
+                    </div>
+                    <div class ="input-field col s2 closeBtn">
+                        <button class="waves-effect waves-light btn" @click="send">
+                            <i class="material-icons right">chat</i>
+                            Send
+                        </button>
+                    </div>
+                    <div class ="input-field col s2">
+                        <button class="waves-effect waves-light btn" @click="leaveRoom">
+                            <i class="material-icons right">clear</i>
+                            Leave
+                        </button>
                     </div>
                 </div>
             </div>
             <div class="row" v-if="!joinedRoom">
                 <div class="input-field col s2">
-                    <input type="text" v-model.trim="cRoomName" placeholder="Room Name" @keyup.enter="createRoom">
+                    <input type="text" v-model.trim="cRoomName" placeholder="Room Name" @keyup.enter="createRoom()">
                 </div>
-                <div class="input-field col s2">
-                    <button class="waves-effect waves-light btn" @click="createRoom">
+                <div class="input-field col s2 closeBtn">
+                    <button class="waves-effect waves-light btn" @click="createRoom()">
                         <i class="material-icons right">add_circle_outline</i>
                         Create
                     </button>
                 </div>
+                <div class="input-field col s2">
+                    <button class="waves-effect waves-light btn" @click="refreshList()">
+                        <i class="material-icons right">cached</i>
+                        Refresh
+                    </button>
+                </div>
             </div>
+            <!--
             <div class="col s2 m2 right" id="profileCard">
                 <div class="card">
                     <div class="card-content white-text">
@@ -82,7 +109,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </div>
         <div class="row" v-if="!joined">
             <div class="input-field col s2">
@@ -116,6 +143,7 @@
                 </button>
             </div>
         </div>-->
+        </div>
     </main>
     <footer class="page-footer" id="foot">
     </footer>

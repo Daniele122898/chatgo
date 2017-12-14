@@ -99,19 +99,25 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 		log.Printf("error: %v", err)
 		return
 	}
+	handleClientLoop(ws, &client)
+}
+
+func handleClientLoop(ws *websocket.Conn, client *Author) {
 	var ra RoomAction
 	var room *Room
 	// Infinite loop to wait and read messages from websocket
 	for{
 		var dataRec RecvData
 		// Read in a new message as JSON and map it to the message object
-		err = ws.ReadJSON(&dataRec)
+		err := ws.ReadJSON(&dataRec)
 		if err != nil {
 			log.Printf("error reading json: %v", err)
-			if _, ok:= room.clients[ws]; ok {
-				delete(room.clients, ws)
-				//broadcast that user left
-				broadcast <- Message{Author: systemAuthor, Message: client.Username + " left the chat!", RoomId: ra.Id}
+			if room != nil {
+				if _, ok := room.clients[ws]; ok {
+					delete(room.clients, ws)
+					//broadcast that user left
+					broadcast <- Message{Author: systemAuthor, Message: client.Username + " left the chat!", RoomId: ra.Id}
+				}
 			}
 			break
 		}
@@ -128,10 +134,10 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 			broadcast <- msgRec
 		case LEFT_ROOM:
 			delete(room.clients, ws)
-			log.Println("User left ", client.Username)
+			log.Println(client.Username, " left ", room.Name)
 			//broadcast that user left
 			broadcast <- Message{Author:systemAuthor, Message: client.Username+ " left the chat!", RoomId:ra.Id}
-			break
+			room = nil
 		case JOINED_ROOM:
 			//Join room
 			//try converting to room action
@@ -148,6 +154,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 			}
 			// Register our new client
 			room.clients[ws] =client.Username
+			log.Println(client.Username, " joined ", room.Name)
 			//Send welcome message
 			welcomeMSG := Message{Author:systemAuthor, Message: client.Username+" joined the chat!", RoomId:ra.Id}
 			broadcast <- welcomeMSG
@@ -161,6 +168,14 @@ func handleConnections(w http.ResponseWriter, r *http.Request){
 			}
 			ra.Id = xid.New().String()
 			rooms[ra.Id] = &Room{clients:make(map[*websocket.Conn]string), Name: ra.Name}
+			//Send list of rooms
+			err = ws.WriteJSON(SendData{OpCode:ROOM_LIST, Data: rooms})
+			if err != nil {
+				log.Printf("error: %v", err)
+				return
+			}
+		case ROOM_LIST:
+			//Client wants a refresh of the rooms
 			//Send list of rooms
 			err = ws.WriteJSON(SendData{OpCode:ROOM_LIST, Data: rooms})
 			if err != nil {

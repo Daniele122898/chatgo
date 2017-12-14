@@ -2,12 +2,12 @@ body {
     display: flex;
     min-height:100vh;
     flex-direction: column;
-    background-color: #666363;
+    background-color: #36393e;
     color: white;
 }
 
 nav {
-    background-color: #515151;
+    background-color: #202225;
 }
 
 main {
@@ -16,6 +16,11 @@ main {
 
 #profileCard{
     margin-right: 10vh;
+    min-width: 294.66px;
+}
+
+.row .col.s2.closeBtn{
+    width: 190px;
 }
 
 .positioner{
@@ -44,6 +49,8 @@ main {
 }
 .systemMsg{
     color: lightgray;
+    margin-top: 1px;
+    margin-bottom: 5px;
 }
 
 #cardAvatar{
@@ -53,10 +60,129 @@ main {
     margin: 0 auto;
 }
 
+.row .col.s2.left{
+    padding-right: 0px;
+}
+
+.row .col.s10.right{
+    padding-left: 0px;
+}
+
+.row .col.s10.right .card{
+    background-color: #36393e;
+    margin-top: 0px;
+    box-shadow: none;
+    border: 1px solid rgba(47, 49, 54, 1);
+    border-left: 0px;
+}
+
+#chat-messages::-webkit-scrollbar-track{
+    -webkit-box-shadow: none;
+    background-color: transparent;
+}
+
+#chat-messages::-webkit-scrollbar
+{
+    width: 6px;
+    background-color: transparent;
+}
+
+#chat-messages::-webkit-scrollbar-thumb
+{
+    background-color: rgba(79,84,92,.6);
+}
+
+#chat-messages .chip{
+    background-color: #494c52c9;
+    color: white;
+}
+
+.roomlist{
+    width: 100%;
+}
+
+#mainRow{
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+.roomHolder{
+    background-color: #2f3136;
+    display: block;
+    width: 100%;
+    min-height: 10vh;
+    height: 60vh;
+    overflow-y: scroll;
+}
+
+.roomHolder::-webkit-scrollbar-track{
+    -webkit-box-shadow: none;
+    background-color: transparent;
+}
+
+.roomHolder::-webkit-scrollbar
+{
+    width: 6px;
+    background-color: transparent;
+}
+
+.roomHolder::-webkit-scrollbar-thumb
+{
+    background-color: rgba(79,84,92,.6);
+}
+
+.row.innerCard .card{
+    margin: 0;
+    border: 1px solid rgba(68, 70, 75, 0.2);
+    border-right: 0px;
+    height: 100%;
+    min-height: 80px;
+    border-radius: 0%;
+    background-color: #2f3136;
+}
+
+.row.innerCard .card:hover{
+    background-color: rgba(79,84,92,.6);
+    transition: background-color 0.1s;
+    -webkit-transition: background-color 0.1s;
+    -moz-transition: background-color 0.1s;
+}
+
+.roomTop{
+    margin-left: -20px;
+    margin-right: -20px;
+    background-color: #2f3136ba;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(47, 49, 54, 1);
+}
+
+#roomTitle{
+    padding-left: 20px;
+}
+
+.selectedRoom{
+    background-color: rgba(79,84,92,.6);
+}
+
+.innerCard{
+    margin: 0;
+    clear: both;
+    width: 100%;
+    min-height: 80px;
+}
+
 #cardUsername{
     vertical-align: bottom;
     text-align: center;
     display: block;
+}
+
+.row .card .card-content .card-title {
+    font-size: 30px;
+}
+
+.card-content.roomlist.joinBtn .card-title{
+    font-size: 22px;
 }
 
 #foot{
@@ -68,9 +194,11 @@ main {
     height: 60vh;
     width: 100%;
     overflow-y: scroll;
+    background-color: #36393e;
 }
 
 #chat-messages {
+    padding-top: 0px;
     min-height: 10vh;
     height: 60vh;
     width: 100%;

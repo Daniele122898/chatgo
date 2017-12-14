@@ -12,9 +12,9 @@ const OpEnum ={
     LEFT_ROOM: 4
 };
 
-var btns = [];
+let btns = [];
 
-var vue = new Vue({
+let vue = new Vue({
     el: "#app",
 
     data: {
@@ -32,11 +32,11 @@ var vue = new Vue({
     },
 
     created: function () {
-        var self = this;
+        let self = this;
         this.ws = new WebSocket("ws://"+window.location.host+"/ws");
         this.ws.addEventListener("message", function (e) {
             self.logs += 'JSON RECEIVED: '+e.data+'<br/>';
-            var msg = JSON.parse(e.data);
+            let msg = JSON.parse(e.data);
             switch (msg.opcode){
                 case OpEnum.MESSAGE_REC:
                     self.msgRec(msg.data);
@@ -54,7 +54,7 @@ var vue = new Vue({
     methods: {
         roomList: function (msg) {
             this.rooms = [];
-            for (var key in msg["data"]){
+            for (let key in msg["data"]){
                 this.rooms.push({"id":key,"name":msg["data"][key].Name})
             }
         },
@@ -70,13 +70,13 @@ var vue = new Vue({
                     emojione.toImage(msg.message) + '<br/>'; //parse emojis
             }
 
-            var element = document.getElementById('chat-messages');
+            let element = document.getElementById('chat-messages');
             element.scrollTop =element.scrollHeight; //Auto scroll to the bottom
         },
 
         send: function () {
             if (this.newMsg !== ""){
-                var msgToSend = JSON.stringify({"opcode": OpEnum.MESSAGE_REC,"data": {"author":{"username":this.username, "avatarurl": this.avatarUrl},
+                let msgToSend = JSON.stringify({"opcode": OpEnum.MESSAGE_REC,"data": {"author":{"username":this.username, "avatarurl": this.avatarUrl},
                     "message":$('<p>').html(this.newMsg).text(),
                     "roomid":this.selectedRoom.id}});
                 this.logs += 'JSON SENT: '+msgToSend+'<br/>';
@@ -86,7 +86,7 @@ var vue = new Vue({
         },
         
         changeAv: function () {
-            var url = prompt("Please give AvatarURL", "");
+            let url = prompt("Please give AvatarURL", "");
             if (url == null || url === "") {
             } else {
                 this.avatarUrl = url;
@@ -97,7 +97,7 @@ var vue = new Vue({
             this.joinedRoom = false;
             this.selectedRoom = null;
             this.chatContent = "";
-            var msgToSend = JSON.stringify({"opcode": OpEnum.LEFT_ROOM});
+            let msgToSend = JSON.stringify({"opcode": OpEnum.LEFT_ROOM});
             this.logs += 'LEAVE EVENT JSON: '+msgToSend+'<br/>';
             this.ws.send(msgToSend);
             this.newMsg = "";
@@ -112,7 +112,7 @@ var vue = new Vue({
             this.username= $('<p>').html(this.username).text();
             this.avatarUrl = "http://i.imgur.com/tcpgezi.jpg";
             this.joined = true;
-            var umsg = JSON.stringify({"username":this.username, "avatarurl": ""});
+            let umsg = JSON.stringify({"username":this.username, "avatarurl": ""});
             this.logs += 'JSON REGRISTRATION SENT: '+umsg+'<br/>';
             this.ws.send(umsg);
             setUpRoomJoiners();
@@ -130,10 +130,17 @@ var vue = new Vue({
                 Materialize.toast('You must choose a Room name!', 2000);
                 return;
             }
-            var msgToSend = JSON.stringify({"opcode":OpEnum.CREATED_ROOM, "data" : {"id":"", "name": this.cRoomName}});
+            let msgToSend = JSON.stringify({"opcode":OpEnum.CREATED_ROOM, "data" : {"id":"", "name": this.cRoomName}});
             this.logs += 'JSON ROOM CREATION SENT: '+msgToSend+'<br/>';
             this.ws.send(msgToSend);
             this.cRoomName = null;
+            setUpRoomJoiners();
+        },
+
+        refreshList: function () {
+            let msgToSend = JSON.stringify({"opcode":OpEnum.ROOM_LIST});
+            this.logs += 'JSON ROOM UPDATE SENT: '+msgToSend+'<br/>';
+            this.ws.send(msgToSend);
             setUpRoomJoiners();
         }
     }
@@ -141,9 +148,8 @@ var vue = new Vue({
 
 function setUpRoomJoiners() {
     sleep(1000).then(() => {
-        console.log("GETTING BUTTONS");
         btns = document.querySelectorAll(".joinBtn");
-        for(var i=0; i<btns.length; i++){
+        for(let i=0; i<btns.length; i++){
             btns[i].value = i;
             btns[i].addEventListener("click", function () {
                 btnSetup(this.value);
@@ -157,11 +163,20 @@ function sleep (time) {
 }
 
 function btnSetup(num) {
-    console.log(num);
-    var room = vue.rooms[num];
-    var msgToSend = JSON.stringify({"opcode": OpEnum.JOINED_ROOM, "data": {"id": room.id, "name": room.name}});
+    let room = vue.rooms[num];
+    //CHECK IF WE ARE IN THIS ROOM ALREADY
+    if (vue.selectedRoom){
+        if(room.id === vue.selectedRoom.id) {
+            return;
+        } else {
+            //LEAVE FIRST OTHERWISE
+            vue.leaveRoom();
+        }
+    }
+    let msgToSend = JSON.stringify({"opcode": OpEnum.JOINED_ROOM, "data": {"id": room.id, "name": room.name}});
     vue.selectedRoom = {"id":room.id, "name": room.name};
     vue.logs += 'JSON JOIN EVENT: '+msgToSend+'<br/>';
     vue.ws.send(msgToSend);
     vue.joinedRoom = true;
+    vue.chatContent = '<div class="roomTop"><span class="card-title" id="roomTitle">'+"#"+vue.selectedRoom.name+'</span></div>'
 }
