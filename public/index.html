@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Simple Chat</title>
+    <title>ChatGo</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -55,6 +55,9 @@
                 </div>
                 <div class="col s10 right" v-if="joinedRoom">
                     <div class="card horizontal">
+                        <div class="roomTop">
+                            <span class="card-title" id="roomTitle">#{{selectedRoom.name}}</span>
+                        </div>
                         <div id="chat-messages" class="card-content" v-html="chatContent">
                         </div>
                     </div>

@@ -74,6 +74,7 @@ main {
     box-shadow: none;
     border: 1px solid rgba(47, 49, 54, 1);
     border-left: 0px;
+    display: block;
 }
 
 #chat-messages::-webkit-scrollbar-track{
@@ -149,15 +150,13 @@ main {
 }
 
 .roomTop{
-    margin-left: -20px;
-    margin-right: -20px;
     background-color: #2f3136ba;
-    margin-bottom: 5px;
     border-bottom: 1px solid rgba(47, 49, 54, 1);
 }
 
 #roomTitle{
     padding-left: 20px;
+    font-size: 30px;
 }
 
 .selectedRoom{

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/xid"
+	"html/template"
 )
 
 const(
@@ -16,6 +17,7 @@ const(
 	JOINED_ROOM 		//2
 	CREATED_ROOM		//3
 	LEFT_ROOM			//4
+	MESSAGE_HISTORY		//5
 )
 
 var (
@@ -33,6 +35,7 @@ type Author struct {
 
 type Room struct {
 	clients  map[*websocket.Conn]string 	// connected clients
+	messages []*Message
 	Name string
 }
 
@@ -152,6 +155,11 @@ func handleClientLoop(ws *websocket.Conn, client *Author) {
 				log.Println("COULDN'T FIND ROOM IN LIST")
 				return
 			}
+			err = ws.WriteJSON(SendData{OpCode: MESSAGE_HISTORY, Data: room.messages})
+			if err != nil {
+				log.Printf("error sending message History: %v", err)
+				return
+			}
 			// Register our new client
 			room.clients[ws] =client.Username
 			log.Println(client.Username, " joined ", room.Name)
@@ -193,14 +201,27 @@ func handleMessages(){
 	for {
 		// Grab the next message from the broadcast channel
 		msg := <-broadcast
+		//Get Room
+		room, ok := rooms[msg.RoomId]
+		if !ok{
+			log.Println("error: Didn't find room with roomID")
+			continue
+		}
+		//remove any HTML from message
+		msg.Message = template.HTMLEscapeString(msg.Message)
+		//room was found and message was successfully received so save to messages
+		//don't save messages from system.
+		if msg.Author.Username != systemAuthor.Username {
+			room.messages = append(room.messages, &msg)
+		}
 		// Send it out to every client that is currently connected
-		for client:= range rooms[msg.RoomId].clients {
+		for client:= range room.clients {
 			err:= client.WriteJSON(SendData{OpCode:MESSAGE_REC, Data:msg})
 			if err != nil {
 				log.Printf("error writing message: %v", err)
-				username:= rooms[msg.RoomId].clients[client]
+				username:= room.clients[client]
 				client.Close()
-				delete(rooms[msg.RoomId].clients, client)
+				delete(room.clients, client)
 				//broadcast that user left
 				broadcast <- Message{Author:systemAuthor, Message: username+" left the chat!", RoomId: msg.RoomId}
 			}

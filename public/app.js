@@ -3,13 +3,16 @@
 	ROOM_LIST			//1
 	JOINED_ROOM 		//2
 	CREATED_ROOM		//3
+	LEFT_ROOM			//4
+	MESSAGE_HISTORY		//5
 )*/
 const OpEnum ={
     MESSAGE_REC: 0,
     ROOM_LIST: 1,
     JOINED_ROOM: 2,
     CREATED_ROOM: 3,
-    LEFT_ROOM: 4
+    LEFT_ROOM: 4,
+    MESSAGE_HISTORY:5
 };
 
 let btns = [];
@@ -44,6 +47,9 @@ let vue = new Vue({
                 case OpEnum.ROOM_LIST:
                     self.roomList(msg);
                     break;
+                case OpEnum.MESSAGE_HISTORY:
+                    self.messageHistory(msg.data);
+                    break;
                 default:
                     Materialize.toast('Got a weird Server Response. View Logs', 2000);
                     break;
@@ -56,6 +62,15 @@ let vue = new Vue({
             this.rooms = [];
             for (let key in msg["data"]){
                 this.rooms.push({"id":key,"name":msg["data"][key].Name})
+            }
+        },
+
+        messageHistory: function (data) {
+            if (data === null || data.length === 0){
+                return;
+            }
+            for (let i = 0; i<data.length; i++){
+                this.msgRec(data[i]);
             }
         },
 
@@ -77,7 +92,7 @@ let vue = new Vue({
         send: function () {
             if (this.newMsg !== ""){
                 let msgToSend = JSON.stringify({"opcode": OpEnum.MESSAGE_REC,"data": {"author":{"username":this.username, "avatarurl": this.avatarUrl},
-                    "message":$('<p>').html(this.newMsg).text(),
+                    "message":this.newMsg,//$('<p>').html(this.newMsg).text()
                     "roomid":this.selectedRoom.id}});
                 this.logs += 'JSON SENT: '+msgToSend+'<br/>';
                 this.ws.send(msgToSend);
@@ -178,5 +193,5 @@ function btnSetup(num) {
     vue.logs += 'JSON JOIN EVENT: '+msgToSend+'<br/>';
     vue.ws.send(msgToSend);
     vue.joinedRoom = true;
-    vue.chatContent = '<div class="roomTop"><span class="card-title" id="roomTitle">'+"#"+vue.selectedRoom.name+'</span></div>'
+    //vue.chatContent = '<div class="roomTop"><span class="card-title" id="roomTitle">'+"#"+vue.selectedRoom.name+'</span></div>'
 }
